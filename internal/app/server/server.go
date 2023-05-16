@@ -11,7 +11,7 @@ import (
 func Serve(cfg *config.Config) error {
 	var wordRepo = storage.NewWordRepo()
 
-	var baseHandler = handlers.NewBaseHandler(wordRepo)
+	var baseHandler = handlers.NewBaseHandler(wordRepo, cfg.SecretKey)
 
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
