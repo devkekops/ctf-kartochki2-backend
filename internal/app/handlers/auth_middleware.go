@@ -18,27 +18,34 @@ type key string
 
 var (
 	defaultTariff     = "free"
+	paidTariff        = "paid"
 	cookieName        = "session"
 	cookiePath        = "/"
-	userIDKey     key = "userID"
+	sessionKey    key = "sessionKey"
 )
 
 type Session struct {
 	UserID    string `json:"userID"`
-	Tariff    string `json:"tariff"`
+	Tariff    string `json:"tariff"` //free or paid
 	Signature string `json:"signature"`
 }
 
-func createSession(secretKey string) Session {
-	userID := uuid.New().String()
-	payload := []byte(userID + defaultTariff)
+func createSession(secretKey string, userID string, tariff string) Session {
+	if userID == "" {
+		userID = uuid.New().String()
+	}
+	if tariff == "" {
+		tariff = defaultTariff
+	}
+
+	payload := []byte(userID + tariff)
 	key := sha256.Sum256([]byte(secretKey))
 
 	h := hmac.New(sha256.New, key[:])
 	h.Write(payload[:])
 	signature := hex.EncodeToString(h.Sum(nil))
 
-	return Session{userID, "free", signature}
+	return Session{userID, tariff, signature}
 }
 
 func checkSignature(sessionEnc string, secretKey string) (Session, error) {
@@ -79,7 +86,7 @@ func authHandle(secretKey string) (ah func(http.Handler) http.Handler) {
 
 			if err != nil {
 				if err == http.ErrNoCookie {
-					session = createSession(secretKey)
+					session = createSession(secretKey, "", "")
 					buf, err := json.Marshal(session)
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -103,7 +110,7 @@ func authHandle(secretKey string) (ah func(http.Handler) http.Handler) {
 				sessionEnc := sessionCookie.Value
 				session, err = checkSignature(sessionEnc, secretKey)
 				if err != nil {
-					session = createSession(secretKey)
+					session = createSession(secretKey, "", "")
 					buf, err := json.Marshal(session)
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -121,7 +128,7 @@ func authHandle(secretKey string) (ah func(http.Handler) http.Handler) {
 				}
 			}
 
-			ctx := context.WithValue(r.Context(), userIDKey, session.UserID)
+			ctx := context.WithValue(r.Context(), sessionKey, session)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

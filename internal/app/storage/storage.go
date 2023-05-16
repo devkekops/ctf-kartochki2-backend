@@ -6,15 +6,17 @@ type Word struct {
 }
 
 type WordRepository interface {
-	GetWords() ([]Word, error)
+	GetFreeWords() ([]Word, error)
+	GetPaidWords() ([]Word, error)
 }
 
 type WordRepo struct {
-	words []Word
+	freeWords []Word
+	paidWords []Word
 }
 
 func NewWordRepo() *WordRepo {
-	var words = []Word{
+	freeWords := []Word{
 		Word{"chica", "девушка"},
 		Word{"padre", "отец"},
 		Word{"cuatro", "четыре"},
@@ -23,11 +25,29 @@ func NewWordRepo() *WordRepo {
 		Word{"raton", "мышь"},
 		Word{"trabajo", "работа"},
 	}
+
+	additionalWords := []Word{
+		Word{"boligrafo", "ручка"},
+		Word{"casa", "дом"},
+		Word{"desayuno", "завтрак"},
+		Word{"nadar", "плавать"},
+		Word{"programador", "программист"},
+		Word{"cerveza", "пиво"},
+		Word{"bandera en tus manos", "флаг вам в руки"},
+	}
+
+	paidWords := append(freeWords, additionalWords...)
+
 	return &WordRepo{
-		words: words,
+		freeWords: freeWords,
+		paidWords: paidWords,
 	}
 }
 
-func (r *WordRepo) GetWords() ([]Word, error) {
-	return r.words, nil
+func (r *WordRepo) GetFreeWords() ([]Word, error) {
+	return r.freeWords, nil
+}
+
+func (r *WordRepo) GetPaidWords() ([]Word, error) {
+	return r.paidWords, nil
 }
