@@ -1,8 +1,13 @@
 package storage
 
+import (
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
+)
+
 type Word struct {
-	Esp string `json:"esp"`
-	Rus string `json:"rus"`
+	Esp string `json:"esp" db:"esp"`
+	Rus string `json:"rus" db:"rus"`
 }
 
 type WordRepository interface {
@@ -15,31 +20,29 @@ type WordRepo struct {
 	paidWords []Word
 }
 
-func NewWordRepo() *WordRepo {
-	freeWords := []Word{
-		Word{"chica", "девушка"},
-		Word{"padre", "отец"},
-		Word{"cuatro", "четыре"},
-		Word{"perro", "собака"},
-		Word{"hora", "час"},
-		Word{"raton", "мышь"},
-		Word{"trabajo", "работа"},
+func NewWordRepo(dsn string) (*WordRepo, error) {
+	db, err := sqlx.Connect("sqlite3", dsn)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	freeWords := []Word{}
+	err = db.Select(&freeWords, `SELECT * FROM freeWords`)
+	if err != nil {
+		return nil, err
 	}
 
-	paidWords := []Word{
-		Word{"boligrafo", "ручка"},
-		Word{"casa", "дом"},
-		Word{"desayuno", "завтрак"},
-		Word{"nadar", "плавать"},
-		Word{"programador", "программист"},
-		Word{"cerveza", "пиво"},
-		Word{"bandera en tus manos", "флаг вам в руки"},
+	paidWords := []Word{}
+	err = db.Select(&paidWords, `SELECT * FROM paidWords`)
+	if err != nil {
+		return nil, err
 	}
 
 	return &WordRepo{
 		freeWords: freeWords,
 		paidWords: paidWords,
-	}
+	}, nil
 }
 
 func (r *WordRepo) GetFreeWords() ([]Word, error) {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/devkekops/ctf-kartochki2-backend/internal/app/config"
@@ -9,9 +10,12 @@ import (
 )
 
 func Serve(cfg *config.Config) error {
-	var wordRepo = storage.NewWordRepo()
+	wordRepo, err := storage.NewWordRepo(cfg.DatabaseDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	var baseHandler = handlers.NewBaseHandler(wordRepo, cfg.SecretKey, cfg.LicenseKeyHash)
+	baseHandler := handlers.NewBaseHandler(wordRepo, cfg.SecretKey, cfg.LicenseKeyHash)
 
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
