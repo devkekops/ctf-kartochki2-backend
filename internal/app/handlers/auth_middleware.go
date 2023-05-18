@@ -48,6 +48,16 @@ func createSession(secretKey string, userID string, tariff string) Session {
 	return Session{userID, tariff, signature}
 }
 
+func getSessionEncoded(session Session) (string, error) {
+	buf, err := json.Marshal(session)
+	if err != nil {
+		return "", err
+	}
+	sessionEncoded := base64.StdEncoding.EncodeToString([]byte(buf))
+
+	return sessionEncoded, nil
+}
+
 func checkSignature(sessionEnc string, secretKey string) (Session, error) {
 	sessionBuf, err := base64.StdEncoding.DecodeString(sessionEnc)
 	if err != nil {
@@ -87,17 +97,16 @@ func authHandle(secretKey string) (ah func(http.Handler) http.Handler) {
 			if err != nil {
 				if err == http.ErrNoCookie {
 					session = createSession(secretKey, "", "")
-					buf, err := json.Marshal(session)
+					sessionEncoded, err := getSessionEncoded(session)
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
 						log.Println(err)
 						return
 					}
-					var sessionEnc = base64.StdEncoding.EncodeToString([]byte(buf))
 
 					cookie := &http.Cookie{
 						Name:  cookieName,
-						Value: sessionEnc,
+						Value: sessionEncoded,
 						Path:  cookiePath,
 					}
 					http.SetCookie(w, cookie)
@@ -111,17 +120,16 @@ func authHandle(secretKey string) (ah func(http.Handler) http.Handler) {
 				session, err = checkSignature(sessionEnc, secretKey)
 				if err != nil {
 					session = createSession(secretKey, "", "")
-					buf, err := json.Marshal(session)
+					sessionEncoded, err := getSessionEncoded(session)
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
 						log.Println(err)
 						return
 					}
-					var sessionEnc = base64.StdEncoding.EncodeToString([]byte(buf))
 
 					cookie := &http.Cookie{
 						Name:  cookieName,
-						Value: sessionEnc,
+						Value: sessionEncoded,
 						Path:  cookiePath,
 					}
 					http.SetCookie(w, cookie)

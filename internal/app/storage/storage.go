@@ -26,7 +26,7 @@ func NewWordRepo() *WordRepo {
 		Word{"trabajo", "работа"},
 	}
 
-	additionalWords := []Word{
+	paidWords := []Word{
 		Word{"boligrafo", "ручка"},
 		Word{"casa", "дом"},
 		Word{"desayuno", "завтрак"},
@@ -35,8 +35,6 @@ func NewWordRepo() *WordRepo {
 		Word{"cerveza", "пиво"},
 		Word{"bandera en tus manos", "флаг вам в руки"},
 	}
-
-	paidWords := append(freeWords, additionalWords...)
 
 	return &WordRepo{
 		freeWords: freeWords,

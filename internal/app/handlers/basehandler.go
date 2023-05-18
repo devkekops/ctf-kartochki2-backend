@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"log"
@@ -133,17 +132,16 @@ func (bh *BaseHandler) activate() http.HandlerFunc {
 
 		session.Tariff = paidTariff
 		session = createSession(bh.secretKey, session.UserID, session.Tariff)
-		buf, err := json.Marshal(session)
+		sessionEncoded, err := getSessionEncoded(session)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
-		var sessionEnc = base64.StdEncoding.EncodeToString([]byte(buf))
 
 		cookie := &http.Cookie{
 			Name:  cookieName,
-			Value: sessionEnc,
+			Value: sessionEncoded,
 			Path:  cookiePath,
 		}
 		http.SetCookie(w, cookie)
